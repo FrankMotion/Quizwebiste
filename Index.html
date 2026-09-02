@@ -1,177 +1,510 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz: Elektrotechnik & Informatik</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f7f6;
-            color: #333;
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
-            color: #2c3e50;
-        }
-        .question-container {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 25px;
-        }
-        h3 {
-            margin-top: 0;
-            color: #34495e;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            width: 25%; /* Teilt die 4 Antworten gleichmäßig auf */
-            vertical-align: middle;
-            background-color: #fafafa;
-            transition: background-color 0.3s;
-        }
-        td:hover {
-            background-color: #e8f4f8;
-        }
-        label {
-            display: block;
-            cursor: pointer;
-            width: 100%;
-            height: 100%;
-        }
-        input[type="radio"] {
-            margin-right: 8px;
-        }
-        .btn-submit {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            background-color: #2980b9;
-            color: white;
-            font-size: 18px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        .btn-submit:hover {
-            background-color: #3498db;
-        }
-        #result {
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            margin-top: 20px;
-            color: #27ae60;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elektrotechnik &amp; Informatik – Lernquiz</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --paper:#E8EEF0;
+    --paper-line:#C4D3D8;
+    --card-bg:#F8FAF9;
+    --ink:#1B2A38;
+    --ink-soft:#52636E;
+    --copper:#B5652D;
+    --pcb-green:#2E7A52;
+    --pcb-green-bg:#E3F1E9;
+    --warn-red:#A13D3D;
+    --warn-red-bg:#F5E7E5;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    font-family:'IBM Plex Sans', sans-serif;
+    color:var(--ink);
+    background-color:var(--paper);
+    background-image:
+      linear-gradient(var(--paper-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--paper-line) 1px, transparent 1px);
+    background-size:28px 28px;
+    background-position:-1px -1px;
+    padding:3rem 1.25rem 4rem;
+  }
+
+  .page{
+    max-width:640px;
+    margin:0 auto;
+  }
+
+  header{
+    margin-bottom:2.5rem;
+  }
+
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:clamp(1.7rem, 4.5vw, 2.4rem);
+    line-height:1.15;
+    margin:0 0 0.6rem;
+  }
+
+  header p{
+    margin:0;
+    max-width:52ch;
+    color:var(--ink-soft);
+    line-height:1.55;
+  }
+
+  header .rule{
+    width:3.5rem;
+    height:3px;
+    background:var(--copper);
+    border:0;
+    margin:1.1rem 0 1.3rem;
+  }
+
+  .quiz{
+    counter-reset: qnum;
+    display:grid;
+    align-items:start;
+  }
+
+  .quiz > fieldset.question,
+  .quiz > .done{
+    grid-column:1;
+    grid-row:1;
+  }
+
+  fieldset.question{
+    counter-increment: qnum;
+    border:1px solid var(--paper-line);
+    background:var(--card-bg);
+    margin:0;
+    padding:1.25rem 1.25rem 1.4rem;
+    position:relative;
+  }
+
+  /* Standard: Frage ausgeblendet; nur die aktuell aktive Frage wird gezeigt */
+  .quiz > fieldset.question,
+  .quiz > .done{
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transition: opacity 220ms ease, visibility 0s linear 220ms;
+  }
+
+  /* Aktive Frage: die erste unbeantwortete, ODER die auf eine beantwortete Frage folgt */
+  .quiz > fieldset.question:first-of-type:not(:has(input:checked)),
+  .quiz > fieldset.question:has(input:checked) + fieldset.question:not(:has(input:checked)){
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transition-delay:0s, 0s;
+  }
+
+  /* Abschluss-Hinweis, sobald die letzte Frage beantwortet ist */
+  .quiz > fieldset.question:last-of-type:has(input:checked) ~ .done{
+    opacity:1;
+    visibility:visible;
+    transition-delay:0s, 0s;
+  }
+
+  .done{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    border:1px solid var(--pcb-green);
+    background:var(--pcb-green-bg);
+    color:var(--pcb-green);
+    font-weight:500;
+    padding:1.5rem;
+    min-height:140px;
+  }
+
+  fieldset.question::before,
+  fieldset.question::after,
+  fieldset.question .corner-tl,
+  fieldset.question .corner-tr{
+    content:"";
+    position:absolute;
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:var(--paper-line);
+  }
+  fieldset.question::before{ top:-3px; left:-3px; }
+  fieldset.question::after{ bottom:-3px; right:-3px; }
+
+  legend{
+    display:flex;
+    align-items:baseline;
+    gap:0.75rem;
+    padding:0 0.35rem;
+    margin-bottom:0.9rem;
+  }
+
+  legend .qnum::before{
+    content: counter(qnum, decimal-leading-zero);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.85rem;
+    font-weight:600;
+    color:var(--copper);
+    letter-spacing:0.02em;
+  }
+
+  legend .qtext{
+    font-weight:500;
+    line-height:1.45;
+  }
+
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:0.55rem;
+  }
+
+  .option{
+    position:relative;
+  }
+
+  .option input{
+    position:absolute;
+    opacity:0;
+    width:1px;
+    height:1px;
+    margin:0;
+  }
+
+  .option label{
+    display:flex;
+    align-items:baseline;
+    gap:0.75rem;
+    padding:0.65rem 0.9rem;
+    border:1px solid var(--paper-line);
+    background:#fff;
+    cursor:pointer;
+    line-height:1.4;
+    transition: background 120ms ease, border-color 120ms ease;
+  }
+
+  .option label:hover{
+    border-color:var(--ink-soft);
+  }
+
+  .option input:focus-visible + label{
+    outline:2px solid var(--copper);
+    outline-offset:2px;
+  }
+
+  .option .letter{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size:0.85rem;
+    color:var(--ink-soft);
+    min-width:1rem;
+  }
+
+  .option .feedback{
+    margin-left:auto;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.72rem;
+    color:var(--ink-soft);
+    white-space:nowrap;
+    opacity:0;
+  }
+
+  /* richtig gewählt */
+  .option input.correct:checked + label{
+    background:var(--pcb-green-bg);
+    border-color:var(--pcb-green);
+  }
+  .option input.correct:checked + label .letter{ color:var(--pcb-green); }
+  .option input.correct:checked + label .feedback{
+    opacity:1;
+    color:var(--pcb-green);
+  }
+  .option input.correct:checked + label .feedback::before{ content:"richtig"; }
+
+  /* falsch gewählt */
+  .option input:checked:not(.correct) + label{
+    background:var(--warn-red-bg);
+    border-color:var(--warn-red);
+  }
+  .option input:checked:not(.correct) + label .letter{ color:var(--warn-red); }
+  .option input:checked:not(.correct) + label .feedback{
+    opacity:1;
+    color:var(--warn-red);
+  }
+  .option input:checked:not(.correct) + label .feedback::before{ content:"leider falsch"; }
+
+  /* richtige Antwort zusätzlich markieren, wenn falsch gewählt wurde */
+  fieldset.question:has(input:checked:not(.correct)) .option input.correct + label{
+    border-color:var(--pcb-green);
+    box-shadow: inset 0 0 0 1px var(--pcb-green);
+  }
+
+  footer{
+    margin-top:2.5rem;
+    padding-top:1.25rem;
+    border-top:1px solid var(--paper-line);
+    color:var(--ink-soft);
+    font-size:0.9rem;
+    line-height:1.5;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .option label{ transition:none; }
+    .quiz > fieldset.question,
+    .quiz > .done{ transition:none; }
+  }
+</style>
 </head>
 <body>
 
-    <h1>Basics Quiz: Elektrotechnik & Informatik</h1>
+  <div class="page">
+    <header>
+      <h1>Elektrotechnik &amp; Informatik</h1>
+      <hr class="rule">
+      <p>Grundlagenquiz für die berufliche Grundbildung. Wähle bei jeder Frage eine der vier Antworten – sobald du eine Antwort ausgewählt hast, erscheint automatisch die nächste Frage an derselben Stelle.</p>
+    </header>
 
-    <div id="quiz-form">
-        
-        <div class="question-container">
-            <h3>1. Was ist die Maßeinheit für den elektrischen Widerstand?</h3>
-            <table>
-                <tr>
-                    <td><label><input type="radio" name="q1" value="wrong"> Ampere (A)</label></td>
-                    <td><label><input type="radio" name="q1" value="wrong"> Volt (V)</label></td>
-                    <td><label><input type="radio" name="q1" value="correct"> Ohm (Ω)</label></td>
-                    <td><label><input type="radio" name="q1" value="wrong"> Watt (W)</label></td>
-                </tr>
-            </table>
+    <div class="quiz">
+
+      <fieldset class="question">
+        <legend><span class="qnum"></span><span class="qtext">Welche Formel beschreibt das Ohm'sche Gesetz richtig?</span></legend>
+        <div class="options">
+          <div class="option">
+            <input type="radio" name="q1" id="q1a" class="correct">
+            <label for="q1a"><span class="letter">a</span><span>U = R × I</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q1" id="q1b">
+            <label for="q1b"><span class="letter">b</span><span>U = R / I</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q1" id="q1c">
+            <label for="q1c"><span class="letter">c</span><span>I = U × R</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q1" id="q1d">
+            <label for="q1d"><span class="letter">d</span><span>R = U × I</span><span class="feedback"></span></label>
+          </div>
         </div>
+      </fieldset>
 
-        <div class="question-container">
-            <h3>2. Wie lautet das Ohmsche Gesetz zur Berechnung der Spannung (U)?</h3>
-            <table>
-                <tr>
-                    <td><label><input type="radio" name="q2" value="wrong"> U = R / I</label></td>
-                    <td><label><input type="radio" name="q2" value="correct"> U = R * I</label></td>
-                    <td><label><input type="radio" name="q2" value="wrong"> U = I / R</label></td>
-                    <td><label><input type="radio" name="q2" value="wrong"> U = P * I</label></td>
-                </tr>
-            </table>
+      <fieldset class="question">
+        <legend><span class="qnum"></span><span class="qtext">In welcher Einheit wird der elektrische Widerstand angegeben?</span></legend>
+        <div class="options">
+          <div class="option">
+            <input type="radio" name="q2" id="q2a">
+            <label for="q2a"><span class="letter">a</span><span>Volt</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q2" id="q2b">
+            <label for="q2b"><span class="letter">b</span><span>Ampere</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q2" id="q2c" class="correct">
+            <label for="q2c"><span class="letter">c</span><span>Ohm</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q2" id="q2d">
+            <label for="q2d"><span class="letter">d</span><span>Watt</span><span class="feedback"></span></label>
+          </div>
         </div>
+      </fieldset>
 
-        <div class="question-container">
-            <h3>3. Wofür steht die Abkürzung "HTML" in der Informatik?</h3>
-            <table>
-                <tr>
-                    <td><label><input type="radio" name="q3" value="wrong"> High Text Machine Language</label></td>
-                    <td><label><input type="radio" name="q3" value="wrong"> Hyperlink and Text Markup Language</label></td>
-                    <td><label><input type="radio" name="q3" value="correct"> Hypertext Markup Language</label></td>
-                    <td><label><input type="radio" name="q3" value="wrong"> Home Tool Markup Language</label></td>
-                </tr>
-            </table>
+      <fieldset class="question">
+        <legend><span class="qnum"></span><span class="qtext">Was passiert mit dem Gesamtwiderstand, wenn mehrere Widerstände in Reihe geschaltet werden?</span></legend>
+        <div class="options">
+          <div class="option">
+            <input type="radio" name="q3" id="q3a">
+            <label for="q3a"><span class="letter">a</span><span>Er wird kleiner als der kleinste Einzelwiderstand</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q3" id="q3b" class="correct">
+            <label for="q3b"><span class="letter">b</span><span>Er entspricht der Summe der Einzelwiderstände</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q3" id="q3c">
+            <label for="q3c"><span class="letter">c</span><span>Er bleibt unverändert</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q3" id="q3d">
+            <label for="q3d"><span class="letter">d</span><span>Er entspricht dem Mittelwert der Einzelwiderstände</span><span class="feedback"></span></label>
+          </div>
         </div>
+      </fieldset>
 
-        <div class="question-container">
-            <h3>4. Welches Zahlensystem verwendet ein Computer auf unterster Ebene?</h3>
-            <table>
-                <tr>
-                    <td><label><input type="radio" name="q4" value="correct"> Binärsystem</label></td>
-                    <td><label><input type="radio" name="q4" value="wrong"> Dezimalsystem</label></td>
-                    <td><label><input type="radio" name="q4" value="wrong"> Hexadezimalsystem</label></td>
-                    <td><label><input type="radio" name="q4" value="wrong"> Oktalsystem</label></td>
-                </tr>
-            </table>
+      <fieldset class="question">
+        <legend><span class="qnum"></span><span class="qtext">Welche Aufgabe übernimmt eine Sicherung im Stromkreis?</span></legend>
+        <div class="options">
+          <div class="option">
+            <input type="radio" name="q4" id="q4a">
+            <label for="q4a"><span class="letter">a</span><span>Sie erhöht die Spannung bei Bedarf</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q4" id="q4b">
+            <label for="q4b"><span class="letter">b</span><span>Sie speichert elektrische Energie</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q4" id="q4c" class="correct">
+            <label for="q4c"><span class="letter">c</span><span>Sie unterbricht den Stromkreis bei Überlastung</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q4" id="q4d">
+            <label for="q4d"><span class="letter">d</span><span>Sie wandelt Gleichstrom in Wechselstrom um</span><span class="feedback"></span></label>
+          </div>
         </div>
+      </fieldset>
 
-        <button class="btn-submit" onclick="calculateScore()">Ergebnis auswerten</button>
-        
-        <div id="result"></div>
+      <fieldset class="question">
+        <legend><span class="qnum"></span><span class="qtext">Welches Material eignet sich am besten als elektrischer Leiter?</span></legend>
+        <div class="options">
+          <div class="option">
+            <input type="radio" name="q5" id="q5a" class="correct">
+            <label for="q5a"><span class="letter">a</span><span>Kupfer</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q5" id="q5b">
+            <label for="q5b"><span class="letter">b</span><span>Gummi</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q5" id="q5c">
+            <label for="q5c"><span class="letter">c</span><span>Glas</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q5" id="q5d">
+            <label for="q5d"><span class="letter">d</span><span>Holz</span><span class="feedback"></span></label>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="question">
+        <legend><span class="qnum"></span><span class="qtext">Wie viele Bit ergeben zusammen ein Byte?</span></legend>
+        <div class="options">
+          <div class="option">
+            <input type="radio" name="q6" id="q6a">
+            <label for="q6a"><span class="letter">a</span><span>4</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q6" id="q6b" class="correct">
+            <label for="q6b"><span class="letter">b</span><span>8</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q6" id="q6c">
+            <label for="q6c"><span class="letter">c</span><span>10</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q6" id="q6d">
+            <label for="q6d"><span class="letter">d</span><span>16</span><span class="feedback"></span></label>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="question">
+        <legend><span class="qnum"></span><span class="qtext">Welches Zahlensystem arbeitet ausschliesslich mit den Ziffern 0 und 1?</span></legend>
+        <div class="options">
+          <div class="option">
+            <input type="radio" name="q7" id="q7a">
+            <label for="q7a"><span class="letter">a</span><span>Dezimalsystem</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q7" id="q7b">
+            <label for="q7b"><span class="letter">b</span><span>Hexadezimalsystem</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q7" id="q7c" class="correct">
+            <label for="q7c"><span class="letter">c</span><span>Binärsystem</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q7" id="q7d">
+            <label for="q7d"><span class="letter">d</span><span>Oktalsystem</span><span class="feedback"></span></label>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="question">
+        <legend><span class="qnum"></span><span class="qtext">Wie verhält sich ein UND-Gatter in der Digitaltechnik?</span></legend>
+        <div class="options">
+          <div class="option">
+            <input type="radio" name="q8" id="q8a">
+            <label for="q8a"><span class="letter">a</span><span>Der Ausgang ist 1, sobald ein Eingang 1 ist</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q8" id="q8b" class="correct">
+            <label for="q8b"><span class="letter">b</span><span>Der Ausgang ist nur dann 1, wenn alle Eingänge 1 sind</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q8" id="q8c">
+            <label for="q8c"><span class="letter">c</span><span>Der Ausgang kehrt den Eingangswert um</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q8" id="q8d">
+            <label for="q8d"><span class="letter">d</span><span>Der Ausgang ist immer 0</span><span class="feedback"></span></label>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="question">
+        <legend><span class="qnum"></span><span class="qtext">Was zählt zur Hardware eines Computers?</span></legend>
+        <div class="options">
+          <div class="option">
+            <input type="radio" name="q9" id="q9a">
+            <label for="q9a"><span class="letter">a</span><span>Das Betriebssystem</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q9" id="q9b">
+            <label for="q9b"><span class="letter">b</span><span>Ein Textverarbeitungsprogramm</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q9" id="q9c" class="correct">
+            <label for="q9c"><span class="letter">c</span><span>Der Arbeitsspeicher (RAM)</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q9" id="q9d">
+            <label for="q9d"><span class="letter">d</span><span>Ein Software-Update</span><span class="feedback"></span></label>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="question">
+        <legend><span class="qnum"></span><span class="qtext">Welche Aufgabe hat die CPU (der Prozessor) in einem Computer?</span></legend>
+        <div class="options">
+          <div class="option">
+            <input type="radio" name="q10" id="q10a">
+            <label for="q10a"><span class="letter">a</span><span>Sie speichert Daten dauerhaft</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q10" id="q10b" class="correct">
+            <label for="q10b"><span class="letter">b</span><span>Sie verarbeitet und steuert die Berechnungen</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q10" id="q10c">
+            <label for="q10c"><span class="letter">c</span><span>Sie zeigt Bilder auf dem Bildschirm an</span><span class="feedback"></span></label>
+          </div>
+          <div class="option">
+            <input type="radio" name="q10" id="q10d">
+            <label for="q10d"><span class="letter">d</span><span>Sie stellt die Verbindung zum Internet her</span><span class="feedback"></span></label>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="done">
+        <p>Fertig! Du hast alle 10 Fragen bearbeitet.</p>
+      </div>
 
     </div>
 
-    <script>
-        function calculateScore() {
-            let score = 0;
-            const totalQuestions = 4;
-            let answeredQuestions = 0;
+    <footer>
+      Nach jeder Auswahl verschwindet die aktuelle Frage automatisch und die nächste erscheint an derselben Stelle – ganz ohne JavaScript, nur mit CSS. Um von vorne zu beginnen, lade die Seite neu.
+    </footer>
+  </div>
 
-            // Alle ausgewählten Radio-Buttons sammeln
-            const selectedAnswers = document.querySelectorAll('input[type="radio"]:checked');
-            answeredQuestions = selectedAnswers.length;
-
-            if (answeredQuestions < totalQuestions) {
-                alert("Bitte beantworte alle Fragen, bevor du abgibst!");
-                return;
-            }
-
-            // Für jede richtige Antwort 1 Punkt vergeben
-            selectedAnswers.forEach(answer => {
-                if (answer.value === "correct") {
-                    score++;
-                }
-            });
-
-            // Ergebnis anzeigen
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerText = `Du hast ${score} von ${totalQuestions} Punkten erreicht!`;
-
-            // Farbe je nach Punktzahl anpassen
-            if (score === totalQuestions) {
-                resultDiv.style.color = "#27ae60"; // Grün für alles richtig
-            } else if (score >= totalQuestions / 2) {
-                resultDiv.style.color = "#f39c12"; // Orange für die Hälfte
-            } else {
-                resultDiv.style.color = "#e74c3c"; // Rot für weniger
-            }
-        }
-    </script>
 </body>
 </html>
